@@ -32,8 +32,8 @@ SAVE_DIR = RESULT_DIR + sys.argv[1]
 CHROMEDRIVER_PATH = "chromedriver_win32\chromedriver"
 
 # 広告関連の定数
-TIME_ONESET = 60
-TIME_FIRSTWAITING = 60
+TIME_ONESET = 12
+TIME_FIRSTWAITING = 6
 TIME_LASTWAITING = 30
 NUM_LOOP = 2
 
@@ -277,7 +277,7 @@ def display_ad(ad_kind, im_yoko_path, im_sikaku_path):
 	img = ImageTk.PhotoImage(file=im_sikaku_path, master=root)
 	img2 = ImageTk.PhotoImage(file=im_yoko_path, master=root2)
 	#print(img2) # デバッグ用
-	#print(type(img2))# デバッグ用
+	#print(type(img2)) # デバッグ用
 	canvas.itemconfig(item, image=img)
 	canvas2.itemconfig(item2, image=img2)
 	
@@ -425,6 +425,8 @@ def main_sub():
 			break;
 	
 	if flag_finish != True:
+		if flag_disp == True:
+			hide_ad(im_yoko_path, im_sikaku_path)
 		print("wait " + str(TIME_LASTWAITING)) # デバッグ用
 		while get_elapsed_time() < TIME_FIRSTWAITING + TIME_ONESET*len(ad_kinds)*NUM_LOOP + TIME_LASTWAITING: # 最後待機
 			pass
