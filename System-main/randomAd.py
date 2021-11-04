@@ -276,8 +276,6 @@ def display_ad(ad_kind, im_yoko_path, im_sikaku_path):
 	root2.geometry(geo2)
 	img = ImageTk.PhotoImage(file=im_sikaku_path, master=root)
 	img2 = ImageTk.PhotoImage(file=im_yoko_path, master=root2)
-	#print(img2) # デバッグ用
-	#print(type(img2)) # デバッグ用
 	canvas.itemconfig(item, image=img)
 	canvas2.itemconfig(item2, image=img2)
 	
@@ -382,10 +380,10 @@ def main_sub():
 			
 			setcount = int( (elapsed-TIME_FIRSTWAITING) / TIME_ONESET ) + 1
 			
-			#if elapsed - int(elapsed) <= 0.01: # デバッグ用
-			#	print(elapsed)
-			#	print(setcount)
-			#	print(ad_kinds[setcount-(len(ad_kinds)*i)-1])
+			if elapsed - int(elapsed) <= 0.01: # デバッグ用
+				print(elapsed)
+				print(setcount)
+				print(ad_kinds[setcount-(len(ad_kinds)*i)-1])
 			
 			if 0 <= (elapsed-TIME_FIRSTWAITING) % TIME_ONESET and \
 			(elapsed-TIME_FIRSTWAITING) % TIME_ONESET < TIME_ONESET / 2: # 無刺激区間
