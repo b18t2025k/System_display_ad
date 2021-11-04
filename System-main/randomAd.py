@@ -226,7 +226,7 @@ def autoClick():
 # キーボードリスナーのon_release時に呼び出される関数
 def on_release(key):
 	if key == keyboard.Key.enter:
-		print('autoClick!')
+		#print('pressed Enter key')
 		autoClick()
 		return False
 
@@ -276,8 +276,8 @@ def display_ad(ad_kind, im_yoko_path, im_sikaku_path):
 	root2.geometry(geo2)
 	img = ImageTk.PhotoImage(file=im_sikaku_path, master=root)
 	img2 = ImageTk.PhotoImage(file=im_yoko_path, master=root2)
-	print(img2)
-	print(type(img2))
+	#print(img2) # デバッグ用
+	#print(type(img2))# デバッグ用
 	canvas.itemconfig(item, image=img)
 	canvas2.itemconfig(item2, image=img2)
 	
@@ -342,11 +342,11 @@ def main_sub():
 		writer = csv.writer(f)
 		writer.writerow(['','','','','',str(start),str(start_program_elapsed),str(start_program_date),"."+str(start_program_date.microsecond)])
 
-	print("wait " + str(TIME_FIRSTWAITING) + " second")
+	print("wait " + str(TIME_FIRSTWAITING) + " second") # デバッグ用
 	while get_elapsed_time() < TIME_FIRSTWAITING: # 最初待機
 		pass
 
-	print(str(TIME_ONESET/2) + " close " + str(TIME_ONESET/2) + " disp")
+	print(str(TIME_ONESET/2) + " close " + str(TIME_ONESET/2) + " disp") # デバッグ用
 	for i in range(NUM_LOOP):
 		random.shuffle(ad_kinds)
 		#ad_kinds = [1,6,5,3,2,4] # デバッグ用
@@ -425,11 +425,12 @@ def main_sub():
 			break;
 	
 	if flag_finish != True:
-		print("wait " + str(TIME_LASTWAITING))
+		print("wait " + str(TIME_LASTWAITING)) # デバッグ用
 		while get_elapsed_time() < TIME_FIRSTWAITING + TIME_ONESET*len(ad_kinds)*NUM_LOOP + TIME_LASTWAITING: # 最後待機
 			pass
 
-	print("finish")
+	print("finish") # デバッグ用
+	
 	while True:
 		pass
 
