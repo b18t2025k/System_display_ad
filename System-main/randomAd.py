@@ -1,5 +1,6 @@
 # 偶に上下バナーの単色表示で上のバナーが出ず下の表示だけしかないバグ ← 原因不明だけどset_event()で解決?
 # ボタンdestroy時の穴あきは直す window作り直す ← 現状閉じるボタンと画像が重ならないように配置しているので修正していません
+# resultとfinish二つのタイムスタンプを取る
 
 import time
 import datetime
@@ -21,12 +22,15 @@ start_program_date = datetime.datetime.now()
 
 # 下のほうで記録
 
-# 引数確認と定数作成
+# 保存するフォルダのパスの定数作成
 RESULT_DIR = "result\\"
-if len(sys.argv) == 1:
-	print("実行時の引数が異常です")
+NAME_PATH = "result\\name.txt"
+if os.path.exists(NAME_PATH) == False:
+	print(NAME_PATH + "にファイルがありません")
 	sys.exit(1)
-SAVE_DIR = RESULT_DIR + sys.argv[1]
+
+with open(NAME_PATH, 'r') as f:
+	SAVE_DIR = RESULT_DIR + f.read()
 
 # chromedriverのパス
 CHROMEDRIVER_PATH = "chromedriver_win32\chromedriver"
@@ -56,6 +60,7 @@ POS_ZENMEN = "810+365"
 
 # 広告種類が何通りあるかのリスト
 ad_kinds = [1,2,3,4,5,6]
+#ad_kinds = [1,2,3,4] # デバッグ用
 
 # 画像のパスを格納するリスト
 im_sikaku_list = []
@@ -97,20 +102,22 @@ img, img2 = (None, None) # PhotoImageでの参照先が消えないようにグ�
 
 # ディレクトリの存在確認+ログファイルを作る関数
 def preparation_files():
-	if False == os.path.isdir(RESULT_DIR):
-		os.mkdir(RESULT_DIR)
+	global RESULT_DIR, SAVE_DIR
+	#if False == os.path.isdir(RESULT_DIR):
+	#	os.mkdir(RESULT_DIR)
 
-	if os.path.isdir(SAVE_DIR):
-		print("すでに同名のユーザが試験済みなので、ユーザ名を変更するかディレクトリの待避を実施してください")
+	if os.path.isdir(SAVE_DIR) == False:
+		print(SAVE_DIR + "フォルダが見つかりません")
 		sys.exit(1)
-	else :
-		os.mkdir(SAVE_DIR)
+	#else :
+		#os.mkdir(SAVE_DIR)
 		# os.mkdir(CAMERA_DIR)
 		# os.mkdir(SCREENSHOT_DIR)
 
 	with open(SAVE_DIR+'\\advertising.csv','a',newline='') as f:
 		writer = csv.writer(f)
-		writer.writerow(['time_display','time_close','pos','content','content2','start_quiz_system','start_program','start_program_date'])
+		writer.writerow(['time_display','time_close','pos','content','content2',\
+		'start_quiz_system(perf)','start_program(perf)','start_program_date','finish_program(perf)','transision_finish_screen(perf)'])
 
 # 画像のpathを四角画像と横長画像にわけてlistに格納
 def get_image(image_dir):
@@ -338,7 +345,7 @@ def main_sub():
 	start = time.perf_counter()
 	with open(SAVE_DIR + '\\advertising.csv', 'a', newline='') as f:
 		writer = csv.writer(f)
-		writer.writerow(['','','','','',str(start),str(start_program_elapsed),str(start_program_date),"."+str(start_program_date.microsecond)])
+		writer.writerow(['','','','','',str(start),str(start_program_elapsed),str(start_program_date)])
 
 	print("wait " + str(TIME_FIRSTWAITING) + " second") # デバッグ用
 	while get_elapsed_time() < TIME_FIRSTWAITING: # 最初待機
@@ -348,7 +355,7 @@ def main_sub():
 	for i in range(NUM_LOOP):
 		random.shuffle(ad_kinds)
 		#ad_kinds = [1,6,5,3,2,4] # デバッグ用
-		while get_elapsed_time() < TIME_ONESET*len(ad_kinds) * (i+1) + TIME_FIRSTWAITING:
+		while get_elapsed_time() < TIME_ONESET*len(ad_kinds) * (i+1) + TIME_FIRSTWAITING: # ad_kindsを一周すると終わるループ
 			elapsed = get_elapsed_time()
 			if elapsed >= TIME_ONESET*len(ad_kinds) * (i+1) + TIME_FIRSTWAITING: # 一応
 				break
@@ -385,6 +392,12 @@ def main_sub():
 				print(setcount)
 				print(ad_kinds[setcount-(len(ad_kinds)*i)-1])
 			
+			##
+			elapsed = get_elapsed_time() # 上の処理が終わった後区間を超えていないか確認 & 更新
+			if elapsed >= TIME_ONESET*len(ad_kinds) * (i+1) + TIME_FIRSTWAITING: # 一応
+				break
+			##
+			
 			if 0 <= (elapsed-TIME_FIRSTWAITING) % TIME_ONESET and \
 			(elapsed-TIME_FIRSTWAITING) % TIME_ONESET < TIME_ONESET / 2: # 無刺激区間
 				if flag_disp == True and flag_trans == True:
@@ -416,23 +429,52 @@ def main_sub():
 					else: # 単色?
 						im_yoko_path = SIMPLE_YOKO_PATH
 						im_sikaku_path = SIMPLE_SIKAKU_PATH
-
+					##
+					elapsed = get_elapsed_time() # 上の処理が重そうなので再度計算 & 確認
+					if 0 <= (elapsed-TIME_FIRSTWAITING) % TIME_ONESET and \
+					(elapsed-TIME_FIRSTWAITING) % TIME_ONESET < TIME_ONESET / 2: # 表示する直前で無刺激区間に入っていた場合
+						break
+					##
 					display_ad(ad_kinds[suf], im_yoko_path, im_sikaku_path)
-					time_disp = get_elapsed_time()
-		if flag_finish == True:
+					time_disp = elapsed
+		if flag_finish == True: # リザルト画面
+			finish = time.perf_counter() # 終了画面への遷移を感知する時間より,プログラムが終了する時間のほうが早いので不要?
 			break;
 	
-	if flag_finish != True:
-		if flag_disp == True:
-			hide_ad(im_yoko_path, im_sikaku_path)
-		print("wait " + str(TIME_LASTWAITING)) # デバッグ用
-		while get_elapsed_time() < TIME_FIRSTWAITING + TIME_ONESET*len(ad_kinds)*NUM_LOOP + TIME_LASTWAITING: # 最後待機
-			pass
-
-	print("finish") # デバッグ用
+	# ここより最後の追加待機時間+終了時間計測処理
 	
-	while True:
-		pass
+	if flag_disp == True:
+		hide_ad(im_yoko_path, im_sikaku_path)
+	
+	if flag_finish != True: # 上のループがwhileの条件で自然と終了した時
+		print("wait " + str(TIME_LASTWAITING)) # デバッグ用
+		while get_elapsed_time() < TIME_FIRSTWAITING + TIME_ONESET*len(ad_kinds)*NUM_LOOP + TIME_LASTWAITING: # 最後待機 中の処理は恐らく実行されない
+			time_elapsed = get_elapsed_time()
+			cur_url = driver.current_url
+			if r"http://3.134.34.102/result" == cur_url: # 終了画面 もしwhileを抜ける前に終了画面になった時はその時間を記録
+				flag_finish = True
+				finish = time.perf_counter()
+	
+	times = (time.perf_counter(), "")
+	
+	if flag_finish == True: # 恐らく実行されない(上のループが終わるほうが早い)
+		times[1] = finish
+	
+	with open(SAVE_DIR + '\\advertising.csv', 'a', newline='') as f: # 終了時間を記録 times[0]は自然に閉じた時間, times[1]はリザルト画面に遷移した時間
+		writer = csv.writer(f)
+		writer.writerow(['','','','','','','','',times[0],times[1]])
+
+	print("finish") # 確認用
+	
+	while True: # 終了画面への遷移はかなり遅れるので終了時間はプログラムが終わった時の時間にして,このwhileループの中身はpassでも良いかも 一応記述しておきます
+		if flag_finish != True:
+			cur_url = driver.current_url
+			if r"http://3.134.34.102/result" == cur_url:
+				flag_finish = True
+				finish = time.perf_counter()
+				with open(SAVE_DIR + '\\advertising.csv', 'a', newline='') as f:
+					writer = csv.writer(f)
+					writer.writerow(['','','','','','','','','',finish])
 
 # main
 
